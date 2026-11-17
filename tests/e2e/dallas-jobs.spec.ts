@@ -78,13 +78,10 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 800 
       expect(await page.evaluate(() => (window as unknown as { __xss?: number }).__xss)).toBeUndefined();
       expect(await page.locator('.cf-jobs-card-description img').count()).toBe(0);
 
-      // Persistence flag false until Keyan adapters + official /api/jobs/import.
-      await expect(
-        page.getByRole('button', { name: 'Save as private job (not connected)' }),
-      ).toBeDisabled();
-      await expect(card.getByText(/Parse preview only — not saved/)).toBeVisible();
-      await expect(card.getByText(/not a published job/)).toBeVisible();
-      await expect(card.getByRole('link', { name: /Try preview id/ })).toHaveCount(0);
+      // The real save request is enabled; this fixture test does not assert persistence.
+      await expect(page.getByRole('button', { name: 'Save as private job', exact: true })).toBeEnabled();
+      await expect(card.getByText(/Preview only — save it/)).toBeVisible();
+      await expect(card.getByRole('link', { name: /Open saved private job/ })).toHaveCount(0);
 
       await page.getByRole('link', { name: 'Open example job detail' }).first().click();
       await page.waitForURL(`**/jobs/${EXAMPLE_JOB_ID}`);

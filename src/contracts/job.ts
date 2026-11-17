@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const JobTypeSchema = z.enum(['internship', 'full_time', 'part_time', 'co_op', 'contract', 'unknown']);
 export const WorkModeSchema = z.enum(['remote', 'hybrid', 'on_site', 'unknown']);
 export const JobDraftSchema = z.object({
-  title: z.string().min(1), company: z.string().min(1), description: z.string().min(1).max(20000),
+  title: z.string().trim().min(1).max(300), company: z.string().trim().min(1).max(300), description: z.string().min(1).max(20000),
   location: z.string().nullable(), jobType: JobTypeSchema, workMode: WorkModeSchema,
   sourceUrl: z.string().url().regex(/^https:\/\//).nullable(), deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
 });

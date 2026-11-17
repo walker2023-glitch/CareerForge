@@ -23,7 +23,7 @@ type JobRow = {
   updated_at: string;
 };
 
-function toJobPosting(row: JobRow): JobPosting {
+export function toJobPosting(row: JobRow): JobPosting {
   return JobPostingSchema.parse({
     id: row.id,
     title: row.title,
@@ -100,4 +100,43 @@ export async function getPublishedJob(id: string): Promise<JobPosting | null> {
   }
 
   return data ? toJobPosting(data as JobRow) : null;
+}
+
+/** Caller identity is verified once; all queries use that session and RLS. */
+export async function createJobDependencies() {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) return { getUser: async () => null };
+    return {
+      getUser: async () => user,
+      adapter: {
+        createPrivateJobImport: async (draft: import('../../contracts').JobDraft) => {
+          const { data, error } = await supabase.from('jobs').insert({
+            title: draft.title, company: draft.company, description: draft.description,
+            location: draft.location, job_type: draft.jobType, work_mode: draft.workMode,
+            source_url: draft.sourceUrl, deadline: draft.deadline,
+            source: 'pasted', status: 'private', created_by_user_id: user.id,
+            employer_id: null, provider_name: null, external_id: null, retrieved_at: null,
+            deadline_verified: false, verification_status: 'unverified',
+          }).select('*').single();
+          if (error || !data) throw new Error('Unable to save job');
+          return toJobPosting(data as JobRow);
+        },
+        getAuthorizedJob: async (id: string) => {
+          const { data, error } = await supabase.from('jobs').select('*').eq('id', id).maybeSingle();
+          if (error) throw new Error('Unable to load job');
+          return data ? toJobPosting(data as JobRow) : null;
+        },
+      },
+    };
+  } catch {
+    return { getUser: async () => null, unavailable: true };
+  }
+}
+
+export async function getAuthorizedJob(id: string): Promise<JobPosting | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const deps = await createJobDependencies();
+  return deps.adapter ? deps.adapter.getAuthorizedJob(id) : null;
 }

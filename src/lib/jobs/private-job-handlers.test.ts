@@ -192,7 +192,7 @@ describe('handleImportJob (POST /api/jobs/import)', () => {
     expect(res.status).toBe(503);
     const data = await res.json();
     expect(data.error.code).toBe('SERVICE_UNAVAILABLE');
-    expect(data.error.message).toContain('Database connection failed');
+    expect(data.error.message).toBe('Unable to import job');
   });
 
   it('returns 503 if adapter returns malformed data violating contract schema', async () => {
@@ -349,6 +349,12 @@ describe('handleGetJob (GET /api/jobs/[id])', () => {
     expect(res.status).toBe(503);
     const data = await res.json();
     expect(data.error.code).toBe('SERVICE_UNAVAILABLE');
-    expect(data.error.message).toContain('Connection timeout');
+    expect(data.error.message).toBe('Unable to load job');
   });
+});
+
+it('reports unavailable infrastructure distinctly from signed-out auth', async () => {
+  const response = await handleImportJob(new Request('http://localhost/api/jobs/import', { method: 'POST', body: '{}' }), { unavailable: true });
+  expect(response.status).toBe(503);
+  expect((await response.json()).error.code).toBe('SERVICE_UNAVAILABLE');
 });

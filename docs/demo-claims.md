@@ -7,8 +7,8 @@ Source inspection on 2026-11-17; this is **not** a deployed smoke test. A row la
 | Sign in | Conditional: Supabase password client in `src/app/sign-in/page.tsx` | A sign-in form exists; live auth needs configured Supabase and a test account |
 | Profile | Conditional: DB read and PATCH route; fixture flag available; PATCH is not atomic | Profile editing is wired to Supabase when configured, but a successful multi-account reload test is still needed |
 | Published jobs | Conditional: DB reader or fixture flag, `src/lib/jobs/job-adapter.ts` | Can browse real published rows when auth/database/rows exist; fixture mode shows examples |
-| Paste job | Preview: `POST /api/jobs/parse`; save switch off | A pasted description can be validated and previewed; private save from UI is unavailable |
-| Direct private-job API | Separate endpoint: `POST /api/jobs` writes directly; import route fails closed | Do not describe the student import journey as saved until paths are reconciled and tested |
+| Paste job | Conditional: preview, authenticated import and authorized detail read are connected | Preview is stateless; Save requests a private unverified database row and links to its detail URL. Live deployment UNKNOWN. |
+| Direct private-job API | `POST /api/jobs` aliases the canonical import handler | Both paths share validation/auth/persistence; only successful DB responses show saved state. |
 | Match and résumé | Fixture screen in `src/app/(student)/match/[id]/page.tsx`; suggestion/read/edit routes fail closed without adapters | Show fictional layout only, explicitly labeled sample; no claim of live AI or durable edits |
 | Saved applications | Fixture state in `src/app/(student)/saved/` | Interactive sample; changes reset on reload |
 | Calendar | Fixture schedule in `src/app/(student)/calendar/page.tsx` | Sample event display/exports; sample date is 2026-11-13 and events are not personal records |

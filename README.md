@@ -4,7 +4,7 @@ CareerForge is a Next.js and Supabase prototype for turning a student's experien
 
 ## Run it
 
-Use Node.js 20 and npm. Copy `.env.example` to `.env.local`, set your own Supabase project URL and publishable key, then run:
+Use Node.js 24 and npm (the locked Supabase SDK requires Node 22 or newer). Copy `.env.example` to `.env.local`, set your own Supabase project URL and publishable key, then run:
 
 ```bash
 npm ci

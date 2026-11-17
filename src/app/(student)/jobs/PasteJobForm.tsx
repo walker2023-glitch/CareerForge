@@ -189,7 +189,7 @@ export function PasteJobForm() {
         {preview ? (
           <article className="cf-jobs-card">
             <div className="cf-jobs-card-top">
-              <span className="cf-jobs-badge">Preview — not saved</span>
+              <span className="cf-jobs-badge">{savedPosting ? 'Saved privately' : 'Preview — not saved'}</span>
               <span className="cf-jobs-badge cf-jobs-badge--muted">● Unverified</span>
             </div>
             <h3>{preview.title}</h3>
@@ -207,12 +207,12 @@ export function PasteJobForm() {
             )}
             <p className="cf-jobs-card-note">
               {savedPosting
-                ? 'Saved as your private import. Opening detail uses the persisted job id (authorized read required).'
-                : 'Parse preview only — not saved. The preview id is not a published job and cannot open on the published detail route.'}
+                ? 'Saved privately to your account. Open the saved job to return to it after reload.'
+                : 'Preview only — save it to return after reload.'}
               {!savedPosting && (
                 <>
                   {' '}
-                  Use <strong>Save as private job</strong> once import is connected, or open a{' '}
+                  Use <strong>Save as private job</strong> to keep this posting, or open a{' '}
                   <strong>published opportunity</strong> from the list above for the live detail page.
                 </>
               )}
