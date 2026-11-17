@@ -15,7 +15,8 @@ This is a navigation and change-impact map for the fork at inspection time. Read
 
 | Method/path | Code | Source-observed behavior |
 | --- | --- | --- |
-| PATCH `/api/profile` | `profile/route.ts` | Authenticated direct profile update then separate fact delete/insert; partial update risk |
+| GET `/api/profile` | `profile/route.ts` | Own consistent snapshot via `read_student_profile`, 401 signed out |
+| PATCH `/api/profile` | `profile/route.ts` | Bounded authenticated save via `save_student_profile`; locks profile, compares exact expectedUpdatedAt, updates profile/facts in one transaction; 409 stale, 400 invalid, 403 role denial, 503 unavailable |
 | POST `/api/jobs/parse` | `jobs/parse/route.ts` | Bounded, stateless job preview; no save |
 | POST `/api/jobs` | `jobs/route.ts` | Compatibility alias of `/api/jobs/import`; same bounded body and `{data}`/structured errors (200 on save) |
 | POST `/api/jobs/import` | `jobs/import/route.ts` | Canonical authenticated import; session-scoped adapter forces pasted/private/unverified provenance |
@@ -35,3 +36,9 @@ T-001: `JobDraftSchema` trims and bounds title/company at 300 characters, matchi
 `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` configure browser/server clients; `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_URL` appear in isolated E2E configuration. `ANTHROPIC_API_KEY` and `CLAUDE_MODEL` are server-side AI settings; `JOB_SEARCH_PROVIDER` selects a provider or `none`; `APP_URL` is the redirect base. `CAREERFORGE_E2E_JOBS_FIXTURE` and `CAREERFORGE_E2E_PROFILE_FIXTURE` enable fictional test paths. Names and intended uses are in `.env.example`; inspect actual reads before changing defaults. Do not put privileged keys behind `NEXT_PUBLIC_`.
 
 The CI workflow `.github/workflows/ci.yml` sets both fixture flags and runs `npm ci`, typecheck, Vitest, build and Playwright smoke. For a contract change run those checks and focused tests around the modified route. Verify authenticated database behavior separately; CI fixture success does not establish migration status or RLS on a deployed project.
+
+## Atomic profile saves (T-002)
+
+`ProfileUpdateSchema` is shared in `src/contracts/student.ts`; duplicate IDs, per-entry lengths and 30,000 combined fact characters are bounded. `expectedUpdatedAt` is an opaque ISO timestamp retaining PostgreSQL microseconds, never converted through JavaScript Date. `read_student_profile()` returns profile plus facts in one statement. `save_student_profile(timestamptz,text,text,jsonb)` locks the authenticated student's row and performs CAS plus fact replacement atomically. A trigger guarantees a strictly newer version even within one transaction. Foreign fact IDs are invalid; identity cannot be provided by the client.
+
+Migration `20261117220000_atomic_profile.sql` revokes direct profile/fact writes from authenticated clients so REST requests cannot bypass the transaction/version boundary. The narrowly scoped SECURITY DEFINER save function pins its search path, validates input, requires the student role and restricts every write to `auth.uid()`. Own reads retain RLS. No production migrations were applied.

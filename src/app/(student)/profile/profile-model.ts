@@ -6,7 +6,7 @@ export const PROFILE_LIMITS = { name: 120, field: 160, facts: 100, totalFactChar
 const EditableProfileSchema = StudentProfileSchema.pick({ displayName: true, field: true, facts: true });
 const nullableText = (text: string | null) => text?.trim() || null;
 
-// Frontend validation only. Server authorization/ownership must come from Keyan's adapters.
+// Frontend validation only. Server authorization/ownership is enforced by the profile RPC.
 export function validateProfileDraft(draft: ProfileDraft): DraftValidation {
   const errors: Record<string, string> = {};
   if (draft.displayName.length > PROFILE_LIMITS.name) errors.displayName = 'Use 120 characters or fewer for your name.';
@@ -15,6 +15,7 @@ export function validateProfileDraft(draft: ProfileDraft): DraftValidation {
   let characters = 0;
   const ids = new Set<string>();
   draft.facts.forEach((fact, index) => {
+    if (fact.text.length > 2000) errors[`facts.${index}.text`] = 'Use 2,000 characters or fewer for this entry.';
     characters += fact.text.length + (fact.org?.length ?? 0) + (fact.dates?.length ?? 0);
     if (ids.has(fact.id)) errors.facts = 'An experience entry was duplicated. Remove the duplicate and try again.';
     ids.add(fact.id);
