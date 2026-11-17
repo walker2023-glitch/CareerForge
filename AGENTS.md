@@ -24,7 +24,7 @@ Before changing a route, Zod schema, SQL migration, environment variable, flag o
 
 - Source contracts: `src/contracts/`; SQL and policies: `supabase/migrations/`; route handlers: `src/app/api/`; feature UI: `src/app/`.
 - `src/app/api/jobs/route.ts` aliases the canonical bounded import route. Keep both paths on one authenticated contract; use the session-scoped job adapter and preserve private, unverified provenance.
-- `src/app/api/profile/route.ts` updates the profile and replaces facts in separate database operations; treat partial saves and competing edits as unresolved until tested/fixed.
+- Profile reads/saves use the snapshot and locked/CAS RPCs. Preserve full timestamp precision; direct profile/fact writes are revoked so updates cannot bypass the transaction.
 - New work should not assume `src/lib/data/` adapters exist. Check the tree before wiring routes that require them.
 - A task is complete when its acceptance criteria are observed and evidenced, not when a branch merely compiles. State `UNKNOWN` for unverified deployments or provider configuration.
 - Document the reason for a consequential decision in `docs/decisions/`; do not force every small change through a meeting, nine-agent consensus, or an invented approval gate.
