@@ -14,6 +14,7 @@ export interface AuthenticatedUser {
 export type GetUserFn = () => Promise<AuthenticatedUser | null>;
 
 export interface JobHandlerDependencies {
+  unavailable?: boolean;
   getUser?: GetUserFn;
   adapter?: Partial<JobDataAdapter>;
 }
@@ -39,6 +40,8 @@ export async function handleImportJob(
   deps: JobHandlerDependencies = {},
 ): Promise<Response> {
 
+
+  if (deps.unavailable) return errorResponse(503, 'SERVICE_UNAVAILABLE', 'Job service is unavailable. Try again later.');
 
   // 1. Authenticate caller session
   if (!deps.getUser) {
@@ -121,6 +124,8 @@ export async function handleGetJob(
   id: string,
   deps: JobHandlerDependencies = {},
 ): Promise<Response> {
+  if (deps.unavailable) return errorResponse(503, 'SERVICE_UNAVAILABLE', 'Job service is unavailable. Try again later.');
+
   // 1. Authenticate caller session
   if (!deps.getUser) {
     try {
