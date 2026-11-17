@@ -9,20 +9,28 @@ begin;
 -- server-side generation path, not directly by an authenticated browser client.
 revoke insert on public.resume_versions from authenticated;
 
-alter table public.jobs
-  add constraint jobs_job_type_check
+do $$
+begin
+if not exists (select 1 from pg_constraint where conrelid = 'public.jobs'::regclass and conname = 'jobs_job_type_check') then
+  alter table public.jobs add constraint jobs_job_type_check
   check (job_type in ('internship', 'full_time', 'part_time', 'co_op', 'contract', 'unknown'));
+end if;
 
-alter table public.jobs
-  add constraint jobs_work_mode_check
+if not exists (select 1 from pg_constraint where conrelid = 'public.jobs'::regclass and conname = 'jobs_work_mode_check') then
+  alter table public.jobs add constraint jobs_work_mode_check
   check (work_mode in ('remote', 'hybrid', 'on_site', 'unknown'));
+end if;
 
-alter table public.jobs
-  add constraint job_deadline_verification_check
+if not exists (select 1 from pg_constraint where conrelid = 'public.jobs'::regclass and conname = 'job_deadline_verification_check') then
+  alter table public.jobs add constraint job_deadline_verification_check
   check (
     (deadline_verified and verification_status = 'verified')
     or (not deadline_verified and verification_status <> 'verified')
   );
+end if;
+
+end;
+$$;
 
 drop policy if exists jobs_update_own on public.jobs;
 

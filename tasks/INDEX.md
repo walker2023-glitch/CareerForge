@@ -4,7 +4,7 @@ This index is edited with the task files. A task owner is the current person or 
 
 | ID | Task | Status | Owner |
 | --- | --- | --- | --- |
-| [T-001](T-001.md) | Reconcile the private pasted-job journey | proposed | unassigned |
+| [T-001](T-001.md) | Reconcile the private pasted-job journey | in progress | Codex |
 | [T-002](T-002.md) | Make profile saves atomic and test isolation | proposed | unassigned |
 | [T-003](T-003.md) | Connect evidence-backed résumé generation and edits | proposed | unassigned |
 

@@ -1,20 +1,6 @@
-import { z } from 'zod';
 import { JobDraftSchema, JobPostingSchema, type JobDraft, type JobPosting } from '../../contracts';
 import { readBoundedBody, MAX_RAW_BODY_BYTES } from './read-bounded-body';
 
-/**
- * Interface for Keyan's upcoming user-scoped database adapters in `src/lib/data/jobs.ts`.
- *
- * In accordance with AGENTS.md:
- * - `src/lib/data/**` and `src/lib/supabase/**` are Keyan-owned.
- * - `src/lib/jobs/**` and `src/app/api/jobs/**` are Dallas-owned.
- * - Routes enforce caller authentication and delegate DB operations to Keyan's adapters.
- * - Under RLS:
- *     - `createPrivateJobImport` persists with `source = 'pasted'`, `status = 'private'`,
- *       and caller's `user.id`.
- *     - `getAuthorizedJob` returns the `JobPosting` if accessible under RLS, or `null`
- *       if non-existent or belonging to another student (private).
- */
 export interface JobDataAdapter {
   createPrivateJobImport(draft: JobDraft): Promise<JobPosting>;
   getAuthorizedJob(id: string): Promise<JobPosting | null>;
@@ -32,10 +18,6 @@ export interface JobHandlerDependencies {
   adapter?: Partial<JobDataAdapter>;
 }
 
-/**
- * Standard API error response helper conforming to AGENTS.md wire contract:
- * `{ error: { code: string, message: string } }`
- */
 function errorResponse(status: number, code: string, message: string): Response {
   return new Response(JSON.stringify({ error: { code, message } }), {
     status,
@@ -43,10 +25,6 @@ function errorResponse(status: number, code: string, message: string): Response 
   });
 }
 
-/**
- * Standard API success response helper conforming to AGENTS.md wire contract:
- * `{ data: T }`
- */
 function successResponse<T>(data: T, status: number = 200): Response {
   return new Response(JSON.stringify({ data }), {
     status,
@@ -56,24 +34,11 @@ function successResponse<T>(data: T, status: number = 200): Response {
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- * Handles `POST /api/jobs/import` requests.
- *
- * Requirements:
- * 1. Authenticates caller session; rejects signed-out requests with 401 UNAUTHENTICATED.
- * 2. Bounds raw request body up to `MAX_RAW_BODY_BYTES` (100 KB) before JSON parsing.
- * 3. Validates body against `JobDraftSchema`; rejects invalid or oversized descriptions with 400 INVALID_INPUT.
- * 4. Checks adapter availability. If Keyan's real adapter is not available, fails closed
- *    with 503 SERVICE_UNAVAILABLE (never pretends to persist or mocks saving).
- * 5. Calls adapter to persist private job under RLS.
- * 6. Returns 200 `{ data: JobPosting }` with server-derived ownership, `source: 'pasted'`,
- *    and `status: 'private'`.
- */
 export async function handleImportJob(
   request: Request,
   deps: JobHandlerDependencies = {},
 ): Promise<Response> {
-  const requestId = crypto.randomUUID();
+
 
   // 1. Authenticate caller session
   if (!deps.getUser) {
@@ -129,11 +94,11 @@ export async function handleImportJob(
   // 5. Check adapter availability
   const createImportFn = deps.adapter?.createPrivateJobImport;
   if (!createImportFn) {
-    // Fails closed if Keyan's adapter has not landed yet
+    // Dependency injection fallback used by isolated handler tests.
     return errorResponse(
       503,
       'SERVICE_UNAVAILABLE',
-      'Job persistence adapter is not available. Waiting for Keyan data adapter.',
+      'Job persistence adapter is not available. Configure the database adapter.',
     );
   }
 
@@ -147,24 +112,11 @@ export async function handleImportJob(
 
     return successResponse(validated.data, 200);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unable to import job';
+    const message = 'Unable to import job';
     return errorResponse(503, 'SERVICE_UNAVAILABLE', message);
   }
 }
 
-/**
- * Handles `GET /api/jobs/[id]` requests.
- *
- * Requirements:
- * 1. Authenticates caller session; rejects signed-out requests with 401 UNAUTHENTICATED.
- * 2. Validates `id` parameter as a UUID. Malformed IDs return 404 NOT_FOUND.
- * 3. Checks adapter availability. If Keyan's real adapter is not available, fails closed
- *    with 503 SERVICE_UNAVAILABLE.
- * 4. Queries authorized job through Keyan's adapter under RLS.
- * 5. If the job does not exist OR is a private job belonging to another student,
- *    returns an indistinguishable 404 NOT_FOUND (preventing existence probing).
- * 6. Returns 200 `{ data: JobPosting }` on authorized access.
- */
 export async function handleGetJob(
   id: string,
   deps: JobHandlerDependencies = {},
@@ -201,11 +153,11 @@ export async function handleGetJob(
     return errorResponse(
       503,
       'SERVICE_UNAVAILABLE',
-      'Job read adapter is not available. Waiting for Keyan data adapter.',
+      'Job read adapter is not available. Configure the database adapter.',
     );
   }
 
-  // 4. Query authorized job via adapter
+  // Query through the session client and RLS.
   try {
     const job = await getJobFn(id);
     if (!job) {
@@ -220,7 +172,7 @@ export async function handleGetJob(
 
     return successResponse(validated.data, 200);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unable to load job';
+    const message = 'Unable to load job';
     return errorResponse(503, 'SERVICE_UNAVAILABLE', message);
   }
 }

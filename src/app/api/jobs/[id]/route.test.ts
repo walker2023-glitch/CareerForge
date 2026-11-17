@@ -16,7 +16,7 @@ function createGetRequest(id: string): NextRequest {
   });
 }
 
-describe('GET /api/jobs/[id] - inert route handler', () => {
+describe('GET /api/jobs/[id]', () => {
   it('returns 401 UNAUTHENTICATED when caller is signed out', async () => {
     vi.mocked(createSupabaseServerClient).mockResolvedValueOnce({
       auth: {
@@ -54,7 +54,7 @@ describe('GET /api/jobs/[id] - inert route handler', () => {
     });
   });
 
-  it('fails closed with 503 SERVICE_UNAVAILABLE while Keyan adapter is absent (no false persistence)', async () => {
+  it('returns a safe 503 if the database read fails', async () => {
     vi.mocked(createSupabaseServerClient).mockResolvedValueOnce({
       auth: {
         getUser: vi.fn().mockResolvedValueOnce({
@@ -70,6 +70,6 @@ describe('GET /api/jobs/[id] - inert route handler', () => {
     expect(response.status).toBe(503);
     const json = await response.json();
     expect(json.error.code).toBe('SERVICE_UNAVAILABLE');
-    expect(json.error.message).toContain('adapter is not available');
+    expect(json.error.message).toMatch(/Unable to (import|load) job/);
   });
 });

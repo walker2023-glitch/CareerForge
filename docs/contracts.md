@@ -17,16 +17,18 @@ This is a navigation and change-impact map for the fork at inspection time. Read
 | --- | --- | --- |
 | PATCH `/api/profile` | `profile/route.ts` | Authenticated direct profile update then separate fact delete/insert; partial update risk |
 | POST `/api/jobs/parse` | `jobs/parse/route.ts` | Bounded, stateless job preview; no save |
-| POST `/api/jobs` | `jobs/route.ts` | Authenticated direct `jobs` insert; separate path from the UI's disabled import |
-| POST `/api/jobs/import` | `jobs/import/route.ts` | Calls handler without adapter; fail-closed |
-| GET `/api/jobs/[id]` | `jobs/[id]/route.ts` | Handler lacks authorized-job adapter; fail-closed |
+| POST `/api/jobs` | `jobs/route.ts` | Compatibility alias of `/api/jobs/import`; same bounded body and `{data}`/structured errors (200 on save) |
+| POST `/api/jobs/import` | `jobs/import/route.ts` | Canonical authenticated import; session-scoped adapter forces pasted/private/unverified provenance |
+| GET `/api/jobs/[id]` | `jobs/[id]/route.ts` | Session-scoped RLS read; own private or authorized employer job, 404 for missing/foreign rows, 401 signed out |
 | POST `/api/resume/suggest` | `resume/suggest/route.ts` | Handler lacks data/model dependencies; fail-closed |
 | GET, PATCH `/api/resume/[id]` | `resume/[id]/route.ts` | Own-version handler lacks adapter; fail-closed |
 | POST `/api/prep/questions` | `prep/questions/route.ts` | Handler depends on absent live job/fact/model wiring; check implementation before enabling |
 | POST `/api/prep/buzzwords` | `prep/buzzwords/route.ts` | Handler depends on absent job/model wiring; check implementation before enabling |
 | GET `/api/prep/news` | `prep/news/route.ts` | Handler behavior is conditional on provider environment; check provider before claiming live news |
 
-The published list and detail pages read through `src/lib/jobs/job-adapter.ts`, not through `/api/jobs`. Client-side job import uses `src/app/(student)/jobs/job-api-client.ts`. A new import path must reconcile both server paths and the UI switch.
+The published list and authorized detail pages read through `src/lib/jobs/job-adapter.ts`, not through `/api/jobs`. Client-side job import uses `src/app/(student)/jobs/job-api-client.ts`. Import requests are enabled. Detail reads allow own private jobs. Database configuration is required; failures never return a saved state.
+
+T-001: `JobDraftSchema` trims and bounds title/company at 300 characters, matching SQL. Migration `20261117210000_private_job_import.sql` restricts direct ordinary-user imports to unverified pasted rows with null provider provenance. The security follow-up guards duplicate constraints for fresh migration replay; no shared database was altered.
 
 ## Configuration and test boundary
 

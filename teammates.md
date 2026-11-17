@@ -9,7 +9,7 @@ The fork retains code from a four-person hackathon. Ownership now lives on each 
 | Area | Observed state | Evidence |
 | --- | --- | --- |
 | Auth/profile | Supabase password sign-in page, server profile read and PATCH route; live use requires configuration and database | `src/app/sign-in/page.tsx`, `src/app/(student)/profile/page.tsx`, `src/app/api/profile/route.ts` |
-| Jobs | Published-job DB reader and pasted-job parser; the UI's private save switch is off | `src/lib/jobs/job-adapter.ts`, `src/app/api/jobs/parse/route.ts`, `src/app/(student)/jobs/job-api-client.ts` |
+| Jobs | Published-job DB reader and pasted-job parser; private save and authorized detail reads are connected conditionally | `src/lib/jobs/job-adapter.ts`, `src/app/api/jobs/parse/route.ts`, `src/app/(student)/jobs/job-api-client.ts` |
 | Match/résumé | Sample match screen; generation/read/edit HTTP routes lack connected persistence adapters | `src/app/(student)/match/[id]/page.tsx`, `src/app/api/resume/` |
 | Saved/calendar | Fictional preview pages; edits are not durable | `src/app/(student)/saved/page.tsx`, `src/app/(student)/calendar/page.tsx` |
 | Tests | CI typechecks, tests, builds and runs fixture-based Chromium smoke | `.github/workflows/ci.yml` |

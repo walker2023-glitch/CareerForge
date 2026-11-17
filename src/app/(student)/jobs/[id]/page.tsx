@@ -1,5 +1,5 @@
 import type { JobPosting } from '../../../../contracts';
-import { getPublishedJob } from '../../../../lib/jobs/job-adapter';
+import { getAuthorizedJob } from '../../../../lib/jobs/job-adapter';
 import { JOB_TYPE_LABELS, WORK_MODE_LABELS } from '../paste-job';
 import { findFixtureJob } from '../job-lookup';
 import '../../../../styles/tokens.css';
@@ -18,7 +18,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
   const job = fixtureMode
     ? findFixtureJob(id)
-    : await getPublishedJob(id);
+    : await getAuthorizedJob(id);
 
   return (
     <div className="cf-jobs">
@@ -51,7 +51,7 @@ function KnownJobDetail({
 
       <div className="cf-jobs-card-top" style={{ marginBottom: '0.75rem' }}>
         <span className="cf-jobs-badge cf-jobs-badge--example">
-          {fixtureMode ? 'Example opportunity' : 'Published opportunity'}
+          {fixtureMode ? 'Example opportunity' : job.status === 'private' ? 'Your private job' : 'Published opportunity'}
         </span>
         <span className="cf-jobs-badge cf-jobs-badge--muted">● Unverified</span>
       </div>
@@ -66,7 +66,7 @@ function KnownJobDetail({
 
       <aside className="cf-jobs-notice" aria-label="Job status">
         <strong>
-          {fixtureMode ? 'Fixture preview — not loaded from the database.' : 'Published job'}
+          {fixtureMode ? 'Fixture preview — not loaded from the database.' : job.status === 'private' ? 'Your private job' : 'Published job'}
         </strong>
         <p>
           {fixtureMode
@@ -136,7 +136,7 @@ function MissingJobDetail({
         <strong>
           {fixtureMode
             ? 'No fixture posting matches this id.'
-            : 'No published job matches this id.'}
+            : 'No accessible job matches this id.'}
         </strong>
         <p>
           Published jobs appear in the list on /jobs. Parse previews are not stored until you save a private
