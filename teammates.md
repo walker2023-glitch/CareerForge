@@ -1,52 +1,21 @@
-# Career Forge team handoff
+# Current project state
 
-Read [AGENTS.md](AGENTS.md) and your own assignment: [Dallas](assignments/dallas.md), [Keyan](assignments/keyan.md), [Steve](assignments/steve-rogers.md), or [Will](assignments/will.md). AGENTS.md controls shared rules and path ownership; assignments control individual work. Dallas edits shared coordination decisions here. Other agents propose updates in their handoffs rather than editing this file concurrently.
+Updated 2026-11-17 from the source tree of `walker2023-glitch/CareerForge` on `main`. This file is a short handoff, not an assignment sheet. Recheck `main` and the active PRs before relying on a status here.
 
-## Verified state
+The fork retains code from a four-person hackathon. Ownership now lives on each [task](tasks/INDEX.md); the former `assignments/` folder and dated deadlines are no longer active instructions. Prior teammates and PR links may still appear in historical comments and `demo/` files; they do not grant current ownership or prove current deployment state.
 
-At this handoff, CareerForge `main` is `f6702ca`: coordination PR [#3](https://github.com/Kdixon04/CareerForge/pull/3) and Steve's visual/profile work from PRs [#4](https://github.com/Kdixon04/CareerForge/pull/4) and [#9](https://github.com/Kdixon04/CareerForge/pull/9) are merged. The [main CI run](https://github.com/Kdixon04/CareerForge/actions/runs/43568833937) passed on that exact commit. Will's calendar PR [#7](https://github.com/Kdixon04/CareerForge/pull/7) was still open when checked on November 14, 2026; recheck current PR/main status before integrating. Pull current `main` before creating a feature branch.
+## Confirmed in source
 
-Main has a Next.js landing page, provisional [contracts](src/contracts/), [fictional examples](src/data/examples.ts), and Steve's `/profile` editing preview. That profile uses fictional data and **does not persist**; the full student/employer journeys are still planned. The verified main CI checks do not prove auth, persistence, security, or live search. Zod 3 remains under advisory: upgrade and revalidate contracts **before** parsing external API requests; do not claim the audit is clean.
+| Area | Observed state | Evidence |
+| --- | --- | --- |
+| Auth/profile | Supabase password sign-in page, server profile read and PATCH route; live use requires configuration and database | `src/app/sign-in/page.tsx`, `src/app/(student)/profile/page.tsx`, `src/app/api/profile/route.ts` |
+| Jobs | Published-job DB reader and pasted-job parser; the UI's private save switch is off | `src/lib/jobs/job-adapter.ts`, `src/app/api/jobs/parse/route.ts`, `src/app/(student)/jobs/job-api-client.ts` |
+| Match/résumé | Sample match screen; generation/read/edit HTTP routes lack connected persistence adapters | `src/app/(student)/match/[id]/page.tsx`, `src/app/api/resume/` |
+| Saved/calendar | Fictional preview pages; edits are not durable | `src/app/(student)/saved/page.tsx`, `src/app/(student)/calendar/page.tsx` |
+| Tests | CI typechecks, tests, builds and runs fixture-based Chromium smoke | `.github/workflows/ci.yml` |
 
-**Ownership exception:** Steve unavailable 2026-11-14; Dallas patched MainNav, root-shell wiring, and steve-shell.spec.ts rebase. The AGENTS.md ownership table still stands for all future work.
+Live deployment, applied migrations on this fork's project, AI provider availability, and end-to-end two-account isolation are **UNKNOWN** from repository inspection. See [feature evidence](docs/demo-claims.md) for the fuller route map.
 
-**Integration status — 2026-11-14 (~3:00 Denver):** `main` at `e45ed67` (docs [#52](https://github.com/Kdixon04/CareerForge/pull/52) on top of [#51](https://github.com/Kdixon04/CareerForge/pull/51) / [#49](https://github.com/Kdixon04/CareerForge/pull/49)). Earlier: [#48](https://github.com/Kdixon04/CareerForge/pull/48) RootShell nav; [#50](https://github.com/Kdixon04/CareerForge/pull/50) fail-closed résumé. Adapter signatures: [keyan-adapter-impl-prompt.md](assignments/keyan-adapter-impl-prompt.md); honest demo claims: [judges-feature-list.md](assignments/judges-feature-list.md).
+## Next work
 
-**PR #49 + safety revert:** [#49](https://github.com/Kdixon04/CareerForge/pull/49) merged bypass `POST /api/jobs` + `IS_JOB_PERSISTENCE_AVAILABLE=true` **without** `src/lib/data/jobs.ts` adapters. Official `POST /api/jobs/import` stays fail-closed. **Dallas safety fix:** flag reverted to `false`; client `JOB_IMPORT_ROUTE` restored to `/api/jobs/import` (bypass route left in tree so build stays intact; UI must not claim persistence). **Keyan still needs** `src/lib/data/jobs.ts` before any flag re-enable.
-
-**Deployed smoke: NOT RUN** until a human completes [vercel-supabase-deploy-checklist.md](assignments/vercel-supabase-deploy-checklist.md) (no secrets in Git).
-
-**Next 90 minutes (by owner):**
-
-- **Dallas:** Flag false + import route restored (this PR); keep résumé fail-closed; human deploy checklist + smoke; ping Will with URL + [WILL-VIDEO-SCRIPT.md](demo/WILL-VIDEO-SCRIPT.md).
-- **Keyan:** Ship `src/lib/data/jobs.ts` (+ résumé) per [keyan-adapter-impl-prompt.md](assignments/keyan-adapter-impl-prompt.md); replace the bypass `POST /api/jobs` insert with adapter-backed `/api/jobs/import`; confirm migrations + seed ≥1 published employer job; Auth redirect URLs.
-- **Steve (Dallas nav patch):** Shared student nav shipped via #48; further UI polish only if bandwidth.
-- **Will:** Lock narration from demo table / [judges-feature-list.md](assignments/judges-feature-list.md); record after deploy smoke; fictional student only; label FIXTURE / provisional persistence honestly.
-- **Antigravity / Codex:** Do not enable more persistence paths until adapters land; integrator merges only—no env invention.
-
-**Proposed scope for 4pm (confirm with human/Keyan):** saved-application **persistence CUT** → labeled fixture on `/saved` (Steve unavailable); **employer journey CUT**; Keyan prioritizes `src/lib/data/jobs.ts` + résumé adapters, then deploy env. Private import + résumé reload are **stretch-to-core** if adapters land in time.
-
-**Verified demo journey reference (for Will's video — do not claim persistence where marked fixture):**
-
-| Step | Route | Expected truth label |
-|------|--------|----------------------|
-| Sign in | `/sign-in` | Real when Supabase env set |
-| Profile save/reload | `/profile` | **Real** when adapter + env (target) |
-| Browse + filters | `/jobs` | **Real** published rows when DB seeded; CI uses fixture env |
-| Job detail | `/jobs/[id]` | **Real** or fixture per env |
-| Paste preview | `/jobs` form | **Real** parse; private save **disabled** (`IS_JOB_PERSISTENCE_AVAILABLE=false`; #49 bypass not adapter-backed) |
-| Match / résumé edit | `/match/[id]` | **Fixture** / fail-closed API until résumé adapter |
-| Saved applications | `/saved` | **Fixture** (proposed cut) |
-| Calendar | `/calendar` | **Fixture** sample schedule |
-| Prep hub | `/jobs/[id]/prep` | **Fixture** (PR #45, `IS_PREP_LIVE` false) |
-
-## Owners and next handoffs
-
-- **Dallas:** foundation, shared contracts/config, jobs/résumé flow and integration. Give Cursor and Antigravity a stable contract and integrate tested slices. Dallas coordinates shared changes; Codex is his designated writer for contracts/config, and Dallas updates this handoff.
-- **Keyan:** Supabase schema, RLS, adapters, security, and employer features. Confirm student/fact ID and storage shape (relational rows versus JSON), job verification/lifecycle, and résumé persistence/source-fact links. Send Dallas and Steve the exact confirmed fields, adapter names/signatures, migration state, and test results before they wire routes.
-- **Steve:** profile/saved-application UI and routes, theme/navigation. His profile preview is fixture-backed; hand Dallas the component/provider props for the root shell and send Keyan exact adapter needs before real saving.
-- **Will:** mobile-friendly in-app calendar for internship deadlines and personal reminders, upcoming in-app reminder states, Google Calendar event links/ICS exports, and (after Keyan's secure contact-data handoff) private professional contacts, meeting notes, and editable follow-up suggestions. Own demo/video and independent QA as well. Request saved-page/nav wiring from Steve and data adapters from Keyan; give owners reproducible findings and mark each demo claim built, fallback, planned, or cut.
-
-Immediate MVP target: profile facts → paste a job → generate evidence-linked résumé suggestions → review/edit → save the next step. That journey is **planned**, not working yet. Live job search follows only after the pasted-job journey works. The calendar deadline/reminder view and external exports can proceed independently; persistent contact follow-ups depend on a private contacts schema and adapter. Background delivery and two-way calendar sync remain later work. Do not change another owner's files; request exact cross-owner changes in a handoff. No credentials or real student data in handoffs.
-
-Handoff format: **owner; changed paths; contract changes requested or made; checks actually run and results (or NOT RUN with reason); blocker; next owner/action.**
+Start with [T-001](tasks/T-001.md) to reconcile the student journey and resolve the split private-import behavior. Then [T-002](tasks/T-002.md) addresses atomic profile persistence and authorization; [T-003](tasks/T-003.md) connects evidence-backed résumé generation. Pick a task owner when work starts. For each handoff, record owner, changed paths, observed results, checks actually run, blockers, and next action in that task.

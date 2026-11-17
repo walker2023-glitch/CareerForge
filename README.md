@@ -1,49 +1,35 @@
-# Career Forge foundation
+# CareerForge
 
-Minimal Next.js App Router foundation for the four-person BYU-Idaho hackathon project. This milestone intentionally contains only the landing page, shared contracts, fictional example data, and checks. It does not contain Supabase, job search, résumé generation, employer, profile, or saved-application features.
+CareerForge is a Next.js and Supabase prototype for turning a student's experience into evidence-based career applications. This repository is a continuation of the BYU-Idaho hackathon codebase. Its screens have different levels of functionality; read [the feature evidence table](docs/demo-claims.md) before describing a feature as live.
 
-## Setup
+## Run it
 
-Requirements: Node.js 20 and npm 10+.
+Use Node.js 20 and npm. Copy `.env.example` to `.env.local`, set your own Supabase project URL and publishable key, then run:
 
-```powershell
-Copy-Item .env.example .env.local
+```bash
 npm ci
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000. The Supabase migrations live in `supabase/migrations/`. Configure authentication and apply migrations to an isolated development project before testing authenticated database flows. A local start or successful build does not establish that a hosted Supabase instance or AI provider is configured. Do not commit `.env.local`, account passwords, or real student profiles.
 
-## Checks
-
-```powershell
+```bash
 npm run typecheck
 npm test
 npm run build
-npx playwright install chromium   # one-time, if Chromium is not installed
+npx playwright install chromium # once, if needed
 npm run smoke
 ```
 
-`npm test` validates the Zod contracts. Run `npm run build` before `npm run smoke`; Playwright starts the built app and checks desktop and mobile Chromium viewports. There is no lint script yet, so CI does not claim a lint result.
+The GitHub Actions workflow runs these checks with fictional profile/job fixture flags. It does not exercise a live database or deployed AI provider; there is no lint script. See [testing and release evidence](docs/workflow.md) for what these checks prove.
 
-## Shared contracts
+## How to work on this project
 
-Read `src/contracts/index.ts` first, then the focused files:
+1. Read [AGENTS.md](AGENTS.md), [the current state](teammates.md), and the relevant files under [docs/](docs/README.md).
+2. Check [tasks/INDEX.md](tasks/INDEX.md) for existing work. Record the desired outcome and a testable example in one task file before changing a feature.
+3. Trace the affected UI, API, Zod contract, and database policy. Mark unknowns and distinguish a future goal from verified code.
+4. Implement a small slice on a branch. Review product behavior, implementation, and verification in that order; update docs and task evidence in the same PR.
 
-- `student.ts`: profile and source facts.
-- `job.ts`: pasted job input and persisted posting, including source URL and deadline verification.
-- `resume.ts`: match evidence and saved generated/edited bullets with a fact snapshot.
+The playbook-inspired process is explained, with a worked example, in [docs/workflow.md](docs/workflow.md). Its principles come from [drewcurley/agentic-playbook](https://github.com/drewcurley/agentic-playbook); this repository adapts the ideas for a smaller project and does not copy its files or nine-agent approval system.
 
-`src/data/examples.ts` contains fictional data only. Contracts follow `AGENTS.md` but remain provisional until Keyan confirms database IDs, fact storage, job verification lifecycle, and résumé persistence/source-fact links.
-
-The foundation page lives in `src/app/`, matching the paths in `AGENTS.md`. Coordinate changes to `src/app/globals.css` with Steve, who owns the design system and theme.
-
-Dependency review: Next.js 15.5.29 pins PostCSS 8.4.31, so the lockfile overrides PostCSS to 8.5.33. Zod 3.23.8 still has a high advisory for oversized constrained collections; its schemas are currently exercised only in tests and are not parsing external requests in this foundation. Upgrade and revalidate the contracts before using Zod on untrusted API input. The production audit is not clean.
-
-## Pull requests and deployment
-
-Open a feature branch from current `main` and a PR into `main`. CI installs from the committed lockfile, checks TypeScript, unit contracts, production build, and a Chromium landing-page smoke at desktop and mobile widths. The smoke test needs a local Chromium installation; CI installs it with required system packages. There is no database check yet. After Keyan publishes migrations and isolated fictional test fixtures, add a separate local Supabase test job that never targets production. Vercel Git integration, if configured, handles preview and production deployments independently of this CI workflow.
-
-## Branch handoff
-
-The original foundation commit was `2b2dead` in a different repository. It was cherry-picked into this CareerForge branch and its provisional contracts were aligned with `AGENTS.md`. Start new feature branches from updated CareerForge `main` after this PR merges. Read `src/contracts/index.ts` and `src/data/examples.ts` first. Do not add credentials or real student data.
+Start with [T-001](tasks/T-001.md): reconcile a reliable student journey and its contracts. Avoid relying on the dated hackathon handoffs that have been removed from the active workflow.
