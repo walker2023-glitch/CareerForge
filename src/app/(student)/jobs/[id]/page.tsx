@@ -103,8 +103,8 @@ function KnownJobDetail({
       <section className="cf-jobs-next" aria-label="Next steps">
         <h2>Next steps</h2>
         <p className="cf-jobs-card-note">
-          Review how your experience lines up, then practice for the role. Match uses fixture data until
-          résumé generation is connected; prep is a preview route until Will ships the hub.
+          Review evidence from your experience facts and edit your résumé suggestions.
+          New suggestions require a configured service; preparation remains a sample preview.
         </p>
         <a className="cf-button" href={`/match/${job.id}`}>
           Review match

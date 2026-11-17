@@ -7,7 +7,19 @@ import { formatEditedBulletsForCopy } from './match-copy-bullets';
 
 type CopyStatus = { kind: 'success' | 'error'; message: string } | null;
 
-export function MatchReview({ resume }: { resume: ResumeVersion }) {
+export function MatchReview({ resume, onSave }: { resume: ResumeVersion; onSave?: (bullets: ResumeVersion['editedBullets']) => Promise<void> }) {
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('');
+  const [saveError, setSaveError] = useState('');
+  async function saveEdits() {
+    if (!onSave || saving) return;
+    setSaving(true); setSaveStatus(''); setSaveError('');
+    try {
+      await onSave(resume.generatedBullets.map(b => ({ id: b.id, text: edits[b.id] ?? '' })));
+      setSaveStatus('Edits saved to your account.');
+    } catch { setSaveError('Could not save edits. Your text is still here. Try again.'); }
+    finally { setSaving(false); }
+  }
   const initialById = useMemo(
     () => new Map(resume.editedBullets.map(b => [b.id, b.text])),
     [resume.editedBullets],
@@ -34,7 +46,7 @@ export function MatchReview({ resume }: { resume: ResumeVersion }) {
       setCopyStatus({
         kind: 'success',
         message:
-          'Copied your edited bullets to the clipboard. Saving is still not connected — edits will not survive reload.',
+          onSave ? 'Copied your current edited bullets.' : 'Copied your edited bullets to the clipboard. Saving is still not connected — edits will not survive reload.',
       });
     } catch {
       setCopyStatus({
@@ -49,7 +61,7 @@ export function MatchReview({ resume }: { resume: ResumeVersion }) {
       <section className="cf-match-section" aria-label="Suggested bullets and evidence">
         <h2>Suggested bullets</h2>
         <p className="cf-match-save-note">
-          <strong>Not saved — review before using.</strong> Edits stay in your browser until secure save routes exist.
+          {onSave ? 'This version is saved. Save your changes before reloading. Edits are student-authored and are not verified against the evidence.' : <><strong>Not saved — review before using.</strong> Edits stay in your browser until secure save routes exist.</>}
         </p>
         <ul className="cf-match-bullets">
           {resume.generatedBullets.map((bullet, index) => (
@@ -59,6 +71,8 @@ export function MatchReview({ resume }: { resume: ResumeVersion }) {
                 id={`bullet-${bullet.id}`}
                 className="cf-input"
                 rows={3}
+                maxLength={2000}
+                disabled={saving}
                 value={edits[bullet.id] ?? ''}
                 onChange={event => setEdits(current => ({ ...current, [bullet.id]: event.target.value }))}
               />
@@ -83,16 +97,18 @@ export function MatchReview({ resume }: { resume: ResumeVersion }) {
           <Button type="button" variant="secondary" onClick={copyEditedBullets} aria-describedby="match-copy-hint">
             Copy edited bullets
           </Button>
-          <Button type="button" variant="secondary" disabled aria-describedby="match-save-hint">
-            Save edits (not connected)
+          <Button type="button" variant="secondary" disabled={!onSave || saving} onClick={saveEdits} aria-describedby="match-save-hint">
+            {onSave ? (saving ? 'Saving…' : 'Save edits') : 'Save edits (not connected)'}
           </Button>
         </div>
         <p className="cf-hint" id="match-copy-hint">
           Copy uses your current edits in the text boxes above, not the original generated draft.
         </p>
         <p className="cf-hint" id="match-save-hint">
-          Saving requires PATCH /api/resume/[id] and is not connected in this fixture slice.
+          {onSave ? 'Saved edits remain separate from the original generated bullets and source evidence.' : 'Saving requires PATCH /api/resume/[id] and is not connected in this fixture slice.'}
         </p>
+        {saveStatus && <p role="status">{saveStatus}</p>}
+        {saveError && <p role="alert">{saveError}</p>}
         {copyStatus && (
           <p
             className={copyStatus.kind === 'error' ? 'cf-error' : 'cf-hint'}
@@ -108,7 +124,7 @@ export function MatchReview({ resume }: { resume: ResumeVersion }) {
         <h2>Gaps</h2>
         <p className="cf-hint">Requirements with no supporting fact in your snapshot — shown explicitly, never hidden.</p>
         {resume.match.gaps.length === 0 ? (
-          <p className="cf-match-empty">No gaps in this fictional sample.</p>
+          <p className="cf-match-empty">{onSave ? 'No gaps were returned. This is not a completeness or hiring assessment.' : 'No gaps in this fictional sample.'}</p>
         ) : (
           <ul className="cf-match-gaps">
             {resume.match.gaps.map(gap => (

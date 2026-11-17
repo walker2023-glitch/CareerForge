@@ -17,6 +17,11 @@ export const ResumeVersionSchema = z.object({
   createdAt: z.string().datetime(), updatedAt: z.string().datetime(),
 }).superRefine((version, context) => {
   const factIds = new Set(version.factSnapshot.map(fact => fact.id));
+  const bulletIds = new Set(version.generatedBullets.map(b => b.id));
+  if (bulletIds.size !== version.generatedBullets.length || new Set(version.editedBullets.map(b => b.id)).size !== version.editedBullets.length || version.editedBullets.some(b => !bulletIds.has(b.id)))
+    context.addIssue({ code: 'custom', path: ['editedBullets'], message: 'Edits must refer to unique generated bullet IDs' });
+  if (version.match.jobId !== version.jobId || version.match.matches.some(m => m.factIds.some(id => !factIds.has(id))))
+    context.addIssue({ code: 'custom', path: ['match'], message: 'Match must refer to this job and saved facts' });
   version.generatedBullets.forEach((bullet, index) => {
     if (bullet.evidence.some(id => !factIds.has(id))) {
       context.addIssue({

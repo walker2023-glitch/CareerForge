@@ -62,7 +62,7 @@ export function ProfilePreview({
                   <strong>Connected profile</strong>
                   <p>
                     This profile is loaded from your Career Forge account. Changes save securely
-                    to your account. No profile text is sent to an AI service.
+                    to your account. Saving does not send facts to an AI service; you choose when to request résumé suggestions.
                   </p>
                 </>
               )}

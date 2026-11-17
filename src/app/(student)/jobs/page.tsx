@@ -10,7 +10,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function JobsPage() {
   const fixtureMode = process.env.CAREERFORGE_E2E_JOBS_FIXTURE === '1';
-  const jobs = fixtureMode ? fixtureBrowseJobs() : await listPublishedJobs();
+  let jobs: Awaited<ReturnType<typeof listPublishedJobs>> = [];
+  let loadError = false;
+  try { jobs = fixtureMode ? fixtureBrowseJobs() : await listPublishedJobs(); }
+  catch { loadError = true; }
   const sectionLabel = fixtureMode ? 'Example opportunity' : 'Published opportunities';
 
   return (
@@ -25,10 +28,10 @@ export default async function JobsPage() {
 
           <aside className="cf-jobs-notice" aria-label="What this page can and cannot do">
             <strong>
-              {fixtureMode ? 'Nothing here is saved yet.' : 'Published opportunities'}
+              {loadError ? 'Job service unavailable' : fixtureMode ? 'Nothing here is saved yet.' : 'Published opportunities'}
             </strong>
             <p>
-              {fixtureMode
+              {loadError ? 'Published jobs cannot be loaded right now. You can preview pasted text; saving requires the job service.' : fixtureMode
                 ? 'Pasting a job builds an unsaved preview in your browser.'
                 : 'Published employer opportunities are loaded securely from Career Forge.'}
               {' '}Every job is treated as <em>unverified</em> until a real source confirms it.
@@ -45,7 +48,7 @@ export default async function JobsPage() {
 
             {jobs.length === 0 ? (
               <div role="status">
-                <h2>No published opportunities yet</h2>
+                <h2>{loadError ? 'Unable to load published opportunities' : 'No published opportunities yet'}</h2>
                 <p className="cf-jobs-card-note">
                   Check back soon or paste a job description below.
                 </p>

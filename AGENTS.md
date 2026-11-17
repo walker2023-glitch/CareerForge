@@ -23,8 +23,8 @@ Before changing a route, Zod schema, SQL migration, environment variable, flag o
 ## Working rules
 
 - Source contracts: `src/contracts/`; SQL and policies: `supabase/migrations/`; route handlers: `src/app/api/`; feature UI: `src/app/`.
-- Review `src/app/api/jobs/route.ts` separately from the fail-closed `src/app/api/jobs/import/route.ts` before changing private imports. They currently disagree about persistence.
-- `src/app/api/profile/route.ts` updates the profile and replaces facts in separate database operations; treat partial saves and competing edits as unresolved until tested/fixed.
-- New work should not assume `src/lib/data/` adapters exist. Check the tree before wiring routes that require them.
+- `src/app/api/jobs/route.ts` aliases the canonical bounded import route. Keep both paths on one authenticated contract; use the session-scoped job adapter and preserve private, unverified provenance.
+- Profile reads/saves use the snapshot and locked/CAS RPCs. Preserve full timestamp precision; direct profile/fact writes are revoked so updates cannot bypass the transaction.
+- Data adapters are in `src/lib/jobs/job-adapter.ts` and `src/lib/resume/resume-adapter.ts`; do not assume a `src/lib/data/` directory. Résumé generation uses a server-only privileged writer after user-scoped authorization; reads and edits stay under RLS.
 - A task is complete when its acceptance criteria are observed and evidenced, not when a branch merely compiles. State `UNKNOWN` for unverified deployments or provider configuration.
 - Document the reason for a consequential decision in `docs/decisions/`; do not force every small change through a meeting, nine-agent consensus, or an invented approval gate.

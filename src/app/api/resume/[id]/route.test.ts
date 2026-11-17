@@ -21,7 +21,7 @@ function signedInClient() {
   } as unknown as Awaited<ReturnType<typeof createSupabaseServerClient>>;
 }
 
-describe('GET/PATCH /api/resume/[id] - inert route handlers', () => {
+describe('GET/PATCH /api/resume/[id]', () => {
   it('GET returns 401 UNAUTHENTICATED when caller is signed out', async () => {
     vi.mocked(createSupabaseServerClient).mockResolvedValueOnce({
       auth: {
@@ -35,7 +35,7 @@ describe('GET/PATCH /api/resume/[id] - inert route handlers', () => {
     expect(response.status).toBe(401);
   });
 
-  it('GET fails closed with 503 while Keyan adapter is absent', async () => {
+  it('GET returns safe 503 when the database operation fails', async () => {
     vi.mocked(createSupabaseServerClient).mockResolvedValueOnce(signedInClient());
 
     const response = await GET(new NextRequest(`http://localhost:3000/api/resume/${mockResumeId}`), {
@@ -44,10 +44,10 @@ describe('GET/PATCH /api/resume/[id] - inert route handlers', () => {
     expect(response.status).toBe(503);
     const json = await response.json();
     expect(json.error.code).toBe('SERVICE_UNAVAILABLE');
-    expect(json.error.message).toContain('adapter');
+    expect(json.error.message).toMatch(/Unable to (load|update) resume version/);
   });
 
-  it('PATCH fails closed with 503 while Keyan adapter is absent', async () => {
+  it('PATCH returns safe 503 when the database operation fails', async () => {
     vi.mocked(createSupabaseServerClient).mockResolvedValueOnce(signedInClient());
 
     const request = new NextRequest(`http://localhost:3000/api/resume/${mockResumeId}`, {
@@ -65,6 +65,6 @@ describe('GET/PATCH /api/resume/[id] - inert route handlers', () => {
     expect(response.status).toBe(503);
     const json = await response.json();
     expect(json.error.code).toBe('SERVICE_UNAVAILABLE');
-    expect(json.error.message).toContain('adapter');
+    expect(json.error.message).toMatch(/Unable to (load|update) resume version/);
   });
 });

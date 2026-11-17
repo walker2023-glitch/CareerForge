@@ -92,11 +92,11 @@ export function buildPrompt(
   job: Pick<JobPosting, 'title' | 'company' | 'description'>,
   facts: StudentFact[],
 ): { system: string; userMessage: string } {
-  const system = `You are an AI resume advisor for CareerForge. You help students tailor truthful resume bullets to job requirements based strictly on their verified experience facts.
+  const system = `You are an AI resume advisor for CareerForge. You help students tailor truthful resume bullets to job requirements based strictly on their student-provided experience facts.
 
 CRITICAL SECURITY AND FACTUALITY RULES:
 1. Use ONLY the experience facts provided in the <student_facts> block. NEVER invent, fabricate, extrapolate, or assume experience, metrics, dates, or technologies not explicitly stated.
-2. Every suggested bullet MUST cite at least one fact ID from <student_facts> in its "evidence" array.
+2. Copy the selected source fact text verbatim; do not paraphrase. Every suggested bullet MUST cite at least one fact ID from <student_facts> in its "evidence" array.
 3. Every number, percentage, or date mentioned in a suggested bullet MUST appear verbatim in the cited fact. If a metric is not in the fact, DO NOT include it.
 4. If a job requirement cannot be fully evidenced by the student's facts, place it in the "gaps" array with an explanatory note. DO NOT write a bullet for it.
 5. Provide at most ${MAX_SUGGESTED_BULLETS} suggested bullets.
@@ -137,7 +137,7 @@ export type GenerateResumeSuggestionsResult =
   | { ok: false; code: 'INVALID_INPUT' | 'UNGROUNDED_EVIDENCE' | 'MODEL_ERROR'; message: string };
 
 /**
- * Generates verified, evidence-linked resume suggestions for a job using the caller's facts.
+ * Generates evidence-linked resume suggestions for a job using the caller's facts.
  *
  * Enforces:
  * - Server-side character and fact count bounds.
@@ -266,8 +266,9 @@ export async function generateResumeSuggestions(
 
     validBullets.push({
       id: crypto.randomUUID(),
-      text: bullet.text,
-      evidence: bullet.evidence,
+      // The model selects evidence; only verbatim fact text becomes a generated claim.
+      text: citedFacts[0].text,
+      evidence: [citedFacts[0].id],
       targetsRequirement: bullet.targetsRequirement,
     });
   }

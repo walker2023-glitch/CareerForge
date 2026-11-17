@@ -22,7 +22,7 @@ The source and its tests remain the final evidence for current implementation. D
 
 **Goal:** A signed-in student pastes a description, saves it privately, and finds it again after reload.
 
-**Trace:** `PasteJobForm.tsx` calls a preview parser; `job-api-client.ts` currently has `IS_JOB_PERSISTENCE_AVAILABLE = false`; `POST /api/jobs/import` fails closed while its adapter is missing; a separate `POST /api/jobs` directly inserts a private job. The existence of that second endpoint does not mean the user journey is connected or secure end to end.
+**Trace:** `PasteJobForm.tsx` calls a preview parser; the import client calls the bounded `POST /api/jobs/import`; `POST /api/jobs` aliases it. A verified-session adapter creates an unverified private row and RLS governs detail reads. This reconciles the split found at the start of T-001; connection in source is still not proof of a successful browser save/reload.
 
 **Plan check:** Decide on one import path and a single ownership model. Verify `JobDraftSchema` accepts the user input; derive identity server side; apply RLS; preserve the `private` status and unverified deadline. Include missing auth, cross-account read denial, duplicate/reload and database error cases.
 

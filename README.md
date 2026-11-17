@@ -4,7 +4,7 @@ CareerForge is a Next.js and Supabase prototype for turning a student's experien
 
 ## Run it
 
-Use Node.js 20 and npm. Copy `.env.example` to `.env.local`, set your own Supabase project URL and publishable key, then run:
+Use Node.js 24 and npm (the locked Supabase SDK requires Node 22 or newer). Copy `.env.example` to `.env.local`, set your own Supabase project URL and publishable key, then run:
 
 ```bash
 npm ci
@@ -32,4 +32,4 @@ The GitHub Actions workflow runs these checks with fictional profile/job fixture
 
 The playbook-inspired process is explained, with a worked example, in [docs/workflow.md](docs/workflow.md). Its principles come from [drewcurley/agentic-playbook](https://github.com/drewcurley/agentic-playbook); this repository adapts the ideas for a smaller project and does not copy its files or nine-agent approval system.
 
-Start with [T-001](tasks/T-001.md): reconcile a reliable student journey and its contracts. Avoid relying on the dated hackathon handoffs that have been removed from the active workflow.
+Check [T-001](tasks/T-001.md) through [T-003](tasks/T-003.md) for implemented slices and blocked live acceptance; [T-004](tasks/T-004.md)/[T-005](tasks/T-005.md) scope the next application/calendar work. Avoid relying on the dated hackathon handoffs that have been removed from the active workflow.

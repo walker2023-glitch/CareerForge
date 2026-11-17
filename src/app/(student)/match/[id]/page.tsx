@@ -1,3 +1,6 @@
+import { createResumeDependencies, getLatestResumeForJob } from '../../../../lib/resume/resume-adapter';
+import { createModelCaller } from '../../../../lib/claude/model-caller';
+import { LiveMatch } from '../LiveMatch';
 import { findFixtureMatch } from '../match-lookup';
 import { MatchReview } from '../MatchReview';
 import '../../../../styles/tokens.css';
@@ -33,8 +36,26 @@ function formatJobSource(job: NonNullable<ReturnType<typeof findFixtureMatch>>['
   return <>Source: pasted / unverified</>;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function MatchPage({ params }: MatchPageProps) {
   const { id } = await params;
+  if (process.env.CAREERFORGE_E2E_JOBS_FIXTURE !== '1') {
+    const deps = await createResumeDependencies();
+    const user = await deps.getUser();
+    if (!user || !deps.adapter || !/^[0-9a-f-]{36}$/i.test(id))
+      return <main><h1>Suggestions not available</h1><p>Sign in and open a job you can access.</p><a href="/sign-in">Sign in</a></main>;
+    try {
+      const job = await deps.adapter.getAuthorizedJob(id);
+      if (!job) return <main><h1>Job not available</h1><a href="/jobs">Back to jobs</a></main>;
+      const resume = await getLatestResumeForJob(job.id);
+      return <main className="cf-match cf-match-shell"><a href={`/jobs/${job.id}`}>Back to job detail</a>
+        <LiveMatch job={job} initialResume={resume} configured={Boolean(deps.canGenerate && createModelCaller())} />
+      </main>;
+    } catch {
+      return <main><h1>Suggestions unavailable</h1><p>We could not load your saved work. Try again.</p><a href="/jobs">Back to jobs</a></main>;
+    }
+  }
   const bundle = findFixtureMatch(id);
 
   return (
