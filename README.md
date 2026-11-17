@@ -21,7 +21,7 @@ npx playwright install chromium # once, if needed
 npm run smoke
 ```
 
-The GitHub Actions workflow runs these checks with fictional profile/job fixture flags. It does not exercise a live database or deployed AI provider; there is no lint script. See [testing and release evidence](docs/workflow.md) for what these checks prove.
+The GitHub Actions workflow runs these checks with fictional profile/job fixture flags. It does not exercise a live database or deployed AI provider; there is no lint script. See [the workflow](docs/workflow.md) for what checks prove and [the deployment checklist](docs/deployment.md) for a hosted verification procedure.
 
 ## How to work on this project
 
