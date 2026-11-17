@@ -5,7 +5,7 @@ Source inspection on 2026-11-17; this is **not** a deployed smoke test. A row la
 | Visible flow | Source-observed state | What a demo can honestly say |
 | --- | --- | --- |
 | Sign in | Conditional: Supabase password client in `src/app/sign-in/page.tsx` | A sign-in form exists; live auth needs configured Supabase and a test account |
-| Profile | Conditional: DB read and PATCH route; fixture flag available; PATCH is not atomic | Profile editing is wired to Supabase when configured, but a successful multi-account reload test is still needed |
+| Profile | Conditional: consistent DB snapshot and atomic version-checked PATCH RPC; fixture flag available | Profile/facts save atomically when the new migration is applied. Live deployment UNKNOWN; isolated verification recorded in T-002. |
 | Published jobs | Conditional: DB reader or fixture flag, `src/lib/jobs/job-adapter.ts` | Can browse real published rows when auth/database/rows exist; fixture mode shows examples |
 | Paste job | Conditional: preview, authenticated import and authorized detail read are connected | Preview is stateless; Save requests a private unverified database row and links to its detail URL. Live deployment UNKNOWN. |
 | Direct private-job API | `POST /api/jobs` aliases the canonical import handler | Both paths share validation/auth/persistence; only successful DB responses show saved state. |

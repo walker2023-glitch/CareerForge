@@ -24,31 +24,9 @@ export default async function ProfilePage() {
     redirect('/sign-in?next=/profile');
   }
 
-  const [{ data: profile, error: profileError }, { data: facts, error: factsError }] =
-    await Promise.all([
-      supabase
-        .from('profiles')
-        .select('id, display_name, field, updated_at')
-        .eq('id', user.id)
-        .single(),
-      supabase
-        .from('student_facts')
-        .select('id, kind, text, dates, org')
-        .eq('user_id', user.id)
-        .order('created_at'),
-    ]);
-
-  if (profileError || factsError || !profile) {
-    throw new Error('Unable to load your profile');
-  }
-
-  const initialProfile = StudentProfileSchema.parse({
-    userId: profile.id,
-    displayName: profile.display_name || 'Student',
-    field: profile.field,
-    facts: facts ?? [],
-    updatedAt: new Date(profile.updated_at).toISOString(),
-  });
+  const { data, error } = await supabase.rpc('read_student_profile');
+  if (error || !data) throw new Error('Unable to load your profile');
+  const initialProfile = StudentProfileSchema.parse(data);
 
   return <ProfilePreview initialProfile={initialProfile} />;
 }

@@ -92,7 +92,7 @@ export function ProfileForm({ initialProfile, onSave }: ProfileFormProps) {
               changed(removeFact(draft, fact.id));
               requestAnimationFrame(() => document.getElementById('profile-add-skill')?.focus());
             }}>Remove</Button></div>
-            <Textarea id={`fact-${fact.id}-text`} label={`What you did — entry ${index + 1}`} rows={3} maxLength={PROFILE_LIMITS.totalFactCharacters} value={fact.text} error={errors[`facts.${index}.text`]} required onChange={event => changed(updateFact(draft, fact.id, { text: event.target.value }))} />
+            <Textarea id={`fact-${fact.id}-text`} label={`What you did — entry ${index + 1}`} rows={3} maxLength={2000} value={fact.text} error={errors[`facts.${index}.text`]} required onChange={event => changed(updateFact(draft, fact.id, { text: event.target.value }))} />
             <div className="cf-profile-grid">
               <Input label={`Organization — entry ${index + 1}`} maxLength={PROFILE_LIMITS.organization} value={fact.org ?? ''} hint="Optional. School, employer or group." error={errors[`facts.${index}.org`]} onChange={event => changed(updateFact(draft, fact.id, { org: event.target.value }))} />
               <Input label={`Dates — entry ${index + 1}`} maxLength={PROFILE_LIMITS.dates} value={fact.dates ?? ''} placeholder="e.g. Fall 2026" hint="Optional. Use dates you know." error={errors[`facts.${index}.dates`]} onChange={event => changed(updateFact(draft, fact.id, { dates: event.target.value }))} />
