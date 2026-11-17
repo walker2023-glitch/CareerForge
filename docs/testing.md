@@ -26,11 +26,13 @@ Transaction checks roll back fictional rows. The concurrency check commits ficti
 
 ## Real Supabase browser checks
 
-Use an explicitly approved isolated Supabase project with all migrations applied and two **fictional** student accounts. Configure `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `E2E_ISOLATED_DB=1`, and `E2E_STUDENT_{A,B}_{EMAIL,PASSWORD}` privately in `.env.local`. Résumé insertion also needs server-only `SUPABASE_SECRET_KEY`. Disable both fixture flags. Never print or commit values. Rebuild so public configuration reaches the browser, then:
+Follow the [private setup guide](private-test-setup.md) for exact variables, migration order and fictional account creation.
+
+Use an explicitly approved isolated Supabase project with all migrations applied and two **fictional** student accounts. Configure `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `E2E_ISOLATED_DB=1`, and `E2E_STUDENT_{A,B}_{EMAIL,PASSWORD}` through the execution environment's private settings (or an uncommitted `.env.local` for separate local development). Résumé insertion also needs server-only `SUPABASE_SECRET_KEY`. Disable both fixture flags. Never print or commit values. Rebuild so public configuration reaches the browser, then:
 
 ```sh
 npm run build
-node --env-file=.env.local node_modules/@playwright/test/cli.js test --project=desktop --workers=1 tests/e2e/dallas-private-jobs-db.spec.ts tests/e2e/profile-db.spec.ts tests/e2e/resume-db.spec.ts
+npm run smoke -- --project=desktop --workers=1 tests/e2e/dallas-private-jobs-db.spec.ts tests/e2e/profile-db.spec.ts tests/e2e/resume-db.spec.ts
 ```
 
 The résumé database spec injects a model response only in the test process, then exercises the real database and browser read/edit/reload routes. It does not call Anthropic. Production has no model-fixture switch. An actual AI smoke check additionally requires configured `ANTHROPIC_API_KEY` and an explicitly confirmed `CLAUDE_MODEL`; only that can verify the external provider.
