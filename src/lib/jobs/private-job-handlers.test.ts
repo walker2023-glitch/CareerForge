@@ -352,3 +352,9 @@ describe('handleGetJob (GET /api/jobs/[id])', () => {
     expect(data.error.message).toBe('Unable to load job');
   });
 });
+
+it('reports unavailable infrastructure distinctly from signed-out auth', async () => {
+  const response = await handleImportJob(new Request('http://localhost/api/jobs/import', { method: 'POST', body: '{}' }), { unavailable: true });
+  expect(response.status).toBe(503);
+  expect((await response.json()).error.code).toBe('SERVICE_UNAVAILABLE');
+});

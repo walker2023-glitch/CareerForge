@@ -131,7 +131,7 @@ export async function createJobDependencies() {
       },
     };
   } catch {
-    return { getUser: async () => null };
+    return { getUser: async () => null, unavailable: true };
   }
 }
 
