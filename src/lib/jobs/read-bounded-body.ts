@@ -36,7 +36,7 @@ export type ReadBoundedBodyResult =
  * 3. Never logs or leaks the raw body contents.
  */
 export async function readBoundedBody(
-  request: Request,
+  request: Pick<Request, 'headers' | 'body' | 'text'>,
   maxBytes: number = MAX_RAW_BODY_BYTES,
 ): Promise<ReadBoundedBodyResult> {
   const contentLengthHeader = request.headers.get('content-length');

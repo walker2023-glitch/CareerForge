@@ -6,16 +6,8 @@ import {
   type StudentFact,
 } from '../../contracts';
 import { readBoundedBody, MAX_RAW_BODY_BYTES } from '../jobs/read-bounded-body';
-import type { ModelCaller } from './resume-suggest';
+import { generateResumeSuggestions, type ModelCaller } from './resume-suggest';
 
-/**
- * Interface for Keyan's upcoming user-scoped résumé adapters in `src/lib/data/`.
- *
- * Per AGENTS.md:
- * - `src/lib/data/**` is Keyan-owned; Dallas owns `src/app/api/resume/**` and `src/lib/claude/**`.
- * - Routes authenticate the caller, then delegate persistence under RLS.
- * - Generated payload / fact snapshot are immutable after insert; PATCH only updates editedBullets.
- */
 export interface ResumeDataAdapter {
   getAuthorizedJob(id: string): Promise<JobPosting | null>;
   getStudentFacts(userId: string): Promise<StudentFact[]>;
@@ -104,13 +96,6 @@ async function requireUser(deps: ResumeHandlerDependencies): Promise<Authenticat
   }
 }
 
-/**
- * Handles `POST /api/resume/suggest`.
- *
- * Fail-closed while Keyan adapters / Anthropic wiring are absent: authenticated
- * callers with a valid `{ jobId }` receive 503 SERVICE_UNAVAILABLE — never a
- * fabricated ResumeVersion.
- */
 export async function handleSuggestResume(
   request: Request,
   deps: ResumeHandlerDependencies = {},
@@ -163,23 +148,31 @@ export async function handleSuggestResume(
     return errorResponse(
       503,
       'SERVICE_UNAVAILABLE',
-      'Resume persistence adapter is not available. Waiting for Keyan data adapter.',
+      'Resume persistence adapter is not available. Configure persistence.',
     );
   }
 
-  // Live path reserved for Antigravity once Keyan adapters land; keep fail-closed.
-  return errorResponse(
-    503,
-    'SERVICE_UNAVAILABLE',
-    'Resume suggestion generation path is not wired yet.',
-  );
+  try {
+    const job = await adapter.getAuthorizedJob(body.data.jobId);
+    if (!job) return errorResponse(404, 'NOT_FOUND', 'Job not found');
+    const facts = await adapter.getStudentFacts(auth.id);
+    if (!facts.length) return errorResponse(400, 'NO_EVIDENCE', 'Add experience facts to your profile before requesting suggestions.');
+    const generated = await generateResumeSuggestions({ userId: auth.id, job, facts, modelCaller: deps.modelCaller });
+    if (!generated.ok) return errorResponse(generated.code === 'INVALID_INPUT' ? 400 : 503, generated.code, generated.message);
+    const version = generated.version;
+    const saved = await adapter.createResumeVersion({
+      jobId: job.id, generatedPayload: { generatedBullets: version.generatedBullets, match: version.match },
+      editedBullets: version.editedBullets, factSnapshot: facts,
+    });
+    const checked = ResumeVersionSchema.safeParse(saved);
+    if (!checked.success || checked.data.userId !== auth.id || checked.data.jobId !== job.id)
+      return errorResponse(503, 'SERVICE_UNAVAILABLE', 'Unable to save suggestions');
+    return successResponse(checked.data, 201);
+  } catch {
+    return errorResponse(503, 'SERVICE_UNAVAILABLE', 'Unable to generate and save suggestions');
+  }
 }
 
-/**
- * Handles `GET /api/resume/[id]`.
- *
- * Fail-closed without Keyan's getOwnResumeVersion adapter.
- */
 export async function handleGetResume(
   id: string,
   deps: ResumeHandlerDependencies = {},
@@ -196,7 +189,7 @@ export async function handleGetResume(
     return errorResponse(
       503,
       'SERVICE_UNAVAILABLE',
-      'Resume read adapter is not available. Waiting for Keyan data adapter.',
+      'Resume read adapter is not available. Configure persistence.',
     );
   }
 
@@ -213,17 +206,11 @@ export async function handleGetResume(
 
     return successResponse(validated.data, 200);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unable to load resume version';
+    const message = 'Unable to load resume version';
     return errorResponse(503, 'SERVICE_UNAVAILABLE', message);
   }
 }
 
-/**
- * Handles `PATCH /api/resume/[id]`.
- *
- * Validates `{ editedBullets }` then fails closed without Keyan's update adapter.
- * Generated bullets / factSnapshot remain immutable through this endpoint.
- */
 export async function handlePatchResume(
   id: string,
   request: Request,
@@ -267,7 +254,7 @@ export async function handlePatchResume(
     return errorResponse(
       503,
       'SERVICE_UNAVAILABLE',
-      'Resume edit adapter is not available. Waiting for Keyan data adapter.',
+      'Resume edit adapter is not available. Configure persistence.',
     );
   }
 
@@ -284,7 +271,7 @@ export async function handlePatchResume(
 
     return successResponse(validated.data, 200);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unable to update resume version';
+    const message = 'Unable to update resume version';
     return errorResponse(503, 'SERVICE_UNAVAILABLE', message);
   }
 }
